@@ -40,7 +40,7 @@ module RailsAdmin
           end
 
           def associated_model_config
-            @associated_model_config ||= RailsAdmin.config(association[:parent_model])
+            @associated_model_config ||= RailsAdmin.config(association[:parent_model]).do_fetch
           end
 
           def selected_id

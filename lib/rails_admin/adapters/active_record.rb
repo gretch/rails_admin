@@ -5,6 +5,44 @@ require 'rails_admin/abstract_object'
 module RailsAdmin
   module Adapters
     module ActiveRecord
+      class AssociationParentProxy
+        
+        def initialize(association)
+          @association = association
+        end
+        
+        def do_fetch
+          @parent ||= association_parent_model_lookup(@association)
+        end
+
+        def association_parent_model_lookup(association)
+          case association.macro
+          when :belongs_to
+            if association.options[:polymorphic]
+              RailsAdmin::Adapters::ActiveRecord.polymorphic_parents(association.name)
+            else
+              association.klass
+            end
+          when :has_one, :has_many, :has_and_belongs_to_many
+            association.active_record
+          else
+            raise "Unknown association type: #{association.macro.inspect}"
+          end
+        end
+      end
+      
+      def self.polymorphic_parents(name)
+        unless @polymorphic_parents
+          @polymorphic_parents = {}
+          RailsAdmin::AbstractModel.all.each do |abstract_model|
+            abstract_model.polymorphic_associations.each do |association|
+              (@polymorphic_parents[association[:options][:as].to_sym] ||= []) << abstract_model
+            end
+          end
+        end
+        @polymorphic_parents[name.to_sym]
+      end
+      
       def self.extended(abstract_model)
         
         # ActiveRecord does not handle has_one relationships the way it does for has_many, 
@@ -22,18 +60,6 @@ module RailsAdmin
         end
       end
             
-      def self.polymorphic_parents(name)
-        unless @polymorphic_parents
-          @polymorphic_parents = {}
-          RailsAdmin::AbstractModel.all.each do |abstract_model|
-            abstract_model.polymorphic_associations.each do |association|
-              (@polymorphic_parents[association[:options][:as].to_sym] ||= []) << abstract_model
-            end
-          end
-        end
-        @polymorphic_parents[name.to_sym]
-      end
-
       def get(id)
         if object = model.find_by_id(id)
           RailsAdmin::AbstractObject.new object
@@ -125,7 +151,7 @@ module RailsAdmin
             :name => association.name,
             :pretty_name => association.name.to_s.tr('_', ' ').capitalize,
             :type => association.macro,
-            :parent_model => association_parent_model_lookup(association),
+            :parent_model => AssociationParentProxy.new(association), #association_parent_model_lookup(association),
             :parent_key => association_parent_key_lookup(association),
             :child_model => association_child_model_lookup(association),
             :child_key => association_child_key_lookup(association),
@@ -164,21 +190,6 @@ module RailsAdmin
         @sort = (@sort.to_s.include?('.') ? @sort : "#{model.table_name}.#{@sort}")
         @sort_order ||= options.delete(:sort_reverse) ? "asc" : "desc"
         options.merge(:order => "#{@sort} #{@sort_order}")
-      end
-
-      def association_parent_model_lookup(association)
-        case association.macro
-        when :belongs_to
-          if association.options[:polymorphic]
-            RailsAdmin::Adapters::ActiveRecord.polymorphic_parents(association.name)
-          else
-            association.klass
-          end
-        when :has_one, :has_many, :has_and_belongs_to_many
-          association.active_record
-        else
-          raise "Unknown association type: #{association.macro.inspect}"
-        end
       end
 
       def association_parent_key_lookup(association)

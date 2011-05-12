@@ -30,7 +30,7 @@ module RailsAdmin
           end
 
           def associated_model_config
-            association[:parent_model].map{|type| RailsAdmin.config(type) }.select{|config| !config.excluded? }
+            association[:parent_model].do_fetch.map{|type| RailsAdmin.config(type) }.select{|config| !config.excluded? }
           end
 
           def polymorphic_type_collection

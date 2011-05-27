@@ -7,7 +7,6 @@ module RailsAdmin
       class Association < RailsAdmin::Config::Fields::Base
 
         def self.inherited(klass)
-            klass.instance_variable_set("@searchable", false)
             klass.instance_variable_set("@sortable", false)
             super(klass)
         end

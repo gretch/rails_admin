@@ -237,25 +237,22 @@ module RailsAdmin
       #     implement filters visually
       
       
+      
       if query.present?
         if ['true', 'false'].include?(query)
           @searchable_fields.select{ |p| p.type == :boolean }.each do |p|
-            statements << "(#{table_name}.#{p.name} = ?)"
+            statements << "(#{p.model.table_name}.#{p.name} = ?)"
             values << (query == "true")
           end
         else
           if (query.to_i.to_s == query)
             @searchable_fields.select{ |p| p.type == :integer }.each do |p|
-              statements << "(#{table_name}.#{p.name} = ?)"
+              statements << "(#{p.model.table_name}.#{p.name} = ?)"
               values << query.to_i
             end
           end
           @searchable_fields.select{ |p| [:text, :string].include?(p.type) }.each do |p|
-            statements << "(#{table_name}.#{p.name} LIKE ?)"
-            values << "%#{query}%"
-          end
-          @searchable_fields.select{ |p| p.sortable?.is_a?(String) }.each do |p|
-            statements << "(#{p.sortable?} LIKE ?)"
+            statements << "(#{p.model.table_name}.#{p.name} LIKE ?)"
             values << "%#{query}%"
           end
         end

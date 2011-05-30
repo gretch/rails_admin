@@ -11,8 +11,8 @@ module RailsAdmin
           @column_width = 250
           
           def initialize(parent, name, properties, association)
-            super(parent, name, properties)
-            klass.instance_variable_set("@sortable", false)
+            super(parent, name, properties, association)
+            instance_variable_set("@sortable", false)
           end
 
           register_instance_option(:partial) do

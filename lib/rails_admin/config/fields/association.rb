@@ -5,10 +5,10 @@ module RailsAdmin
   module Config
     module Fields
       class Association < RailsAdmin::Config::Fields::Base
-
+        
         def self.inherited(klass)
-            klass.instance_variable_set("@sortable", false)
-            super(klass)
+          klass.instance_variable_set("@sortable", false)
+          super(klass)
         end
 
         # Reader for the association information hash
